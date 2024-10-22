@@ -1,0 +1,36 @@
+name: Run benchmarks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  run-benchmark:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        benchmark: [nlp, file-enc, unix50, log-analysis, uniq-ips]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update && sudo apt install -y --no-install-recommends \
+            curl wget unzip
+
+      - name: Set execute permissions for main.sh
+        run: chmod +x main.sh
+
+      - name: Run Benchmark for ${{ matrix.benchmark }}
+        run: ./main.sh ${{ matrix.benchmark }} --small
+
+      - name: Upload .out and .err files
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.benchmark }}-logs
+          path: ${{ matrix.benchmark }}/${{ matrix.benchmark }}.*
+          if-no-files-found: error
